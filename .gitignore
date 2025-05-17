@@ -361,3 +361,7 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/src/AIChatApp/appsettings.Local.json
+/src/AIChatApp/ingestioncache.db-shm
+/src/AIChatApp/ingestioncache.db-wal
+src/AIChatApp.Presentation/.env.local

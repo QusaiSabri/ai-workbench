@@ -51,35 +51,19 @@ public class DataIngestor(
             modifiedDoc.Records.Clear();
             modifiedDoc.Records.AddRange(newRecords.Select(r => new IngestedRecord { Id = r.Key, DocumentId = modifiedDoc.Id }));
 
-                // Ensure we use the tracked entity if it exists
-                var trackedDoc = await ingestionCacheDb.Documents
-                    .Include(d => d.Records)
-                    .FirstOrDefaultAsync(d => d.Id == modifiedDoc.Id && d.SourceId == modifiedDoc.SourceId);
 
-                if (trackedDoc != null)
+            if (ingestionCacheDb.Entry(modifiedDoc).State == EntityState.Detached)
+            {
+                var exists = await ingestionCacheDb.Documents.AnyAsync(d => d.Id == modifiedDoc.Id && d.SourceId == modifiedDoc.SourceId);
+                if (exists)
                 {
-                    // Update the tracked entity's properties and records
-                    trackedDoc.Version = modifiedDoc.Version;
-                    trackedDoc.Records.Clear();
-                    trackedDoc.Records.AddRange(modifiedDoc.Records);
+                    ingestionCacheDb.Documents.Attach(modifiedDoc);
                 }
                 else
                 {
                     ingestionCacheDb.Documents.Add(modifiedDoc);
                 }
-
-            // if (ingestionCacheDb.Entry(modifiedDoc).State == EntityState.Detached)
-            // {
-            //     var exists = await ingestionCacheDb.Documents.AnyAsync(d => d.Id == modifiedDoc.Id && d.SourceId == modifiedDoc.SourceId);
-            //     if (exists)
-            //     {
-            //         ingestionCacheDb.Documents.Attach(modifiedDoc);
-            //     }
-            //     else
-            //     {
-            //         ingestionCacheDb.Documents.Add(modifiedDoc);
-            //     }
-            // }
+            }
         }
 
         await ingestionCacheDb.SaveChangesAsync();
